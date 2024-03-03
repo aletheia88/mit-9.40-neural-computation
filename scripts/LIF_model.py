@@ -110,7 +110,67 @@ def firing_rates_vs_curent(dt, t_dur, I_amplitudes, V_threshold, V_reset,
     return firing_rates_numerical, firing_rates_theoretical
 
 
+def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m, dt, I_amplitude,
+        potassium_on=True):
+
+    """
+     Instead of resetting the voltage each time it reaches `V_threshold`, we
+     will increase the conductance of potassium out of the cell right. The
+     model now has two equations
+        C_m dV/dt = -G_L * (V - E_L) - G_K(t) * (V - E_K) + I_e
+        τ_r dG_K/dt = -G_K, G_K -> G_K + ΔG_K
+    """
+    G_L = C_m/(tau/1000.)    # S
+    delta_G = 500e-9    #S
+
+    time_vector = np.arange(0, 300, dt) # simulate from 0 to 300 ms
+    time_Ion = 100      # time to begin applied current (onset)
+    time_Ioff = 200     # time to end applied current (offset)
+    index_Ion = round(time_on/dt)   # time-point index of current onset
+    index_Ioff = round(time_off/dt)     # time-point index of current offset
+
+    # initialize
+    G_K = np.zeros(len(time_vector))
+    spikes = np.zeros(len(time_vector))
+    V = E_L * np.ones(len(time_vector))
+    V_thresholds = V_threshold_0 * np.ones(len(time_vector))
+
+    def update_for_spike(t, G_K, V, spikes):
+        if V[t+1] > V_threholds[t+1]:
+            spikes[t+1] = 1
+            if potassium_on:
+                G_K[t+1] += delta_G
+            else:
+                V[t+1] = V_reset
+        return G_K, V, spikes
+
+    for t in time_vector:
+        if potassium_on:
+            G_K[t+1] = G_K[t] * np.exp(-dt/tau_ref)
+        else:
+            G_K[t+1] = 0
+
+        # update Vinf or Vss
+         # - G_L * E_L -> mA -> *1e-3 -> A
+         # V -> *1e+3 -> mV
+        Vinf = 1e+3 * (I[t+1] + G_L * E_L * 1e-3 + \
+                G_K[t+1] * E_K * 1e-3)/(G_L + G_K[t+1])
+
+        # update the effective time constant
+        tau_eff = 1e+3 * C_m/(G_L + G_K[t+1])
+
+        # update the membrane potential
+        V[t+1] = Vinf + (V[t] - Vinf) * np.exp(-dt/tau_eff)
+
+        # update the membrane potential after a potential spike
+        G_K, V, spikes = update_after_spike(t, G_K, V, spikes)
+
+    return G_K, V, spikes
+
+
 if __name__ == "__main__":
+    ### parameters for simulating basic LIF model (once reaching V_threshold
+    ### reset V to V_reset
     dt = 0.01
     t_dur = 500
     I_start = 20   # ms
@@ -119,7 +179,20 @@ if __name__ == "__main__":
     V_threshold = -50
     V_reset = -65
 
-    outputs = simulate_LIF(dt, t_dur, I_start, I_stop, I_amplitude,
+    outputs = simulate_basic_LIF(dt, t_dur, I_start, I_stop, I_amplitude,
             V_threshold, V_reset)
     I_amplitudes = np.arange(1, 15, 0.1)
+
+    ### parameters for simulating extended LIF model
+    tau = 10.    # ms
+    tau_ref = 2.0  # ms
+    E_L = -70   # mV
+    E_K = -80.  # mV
+    V_threshold_0 = -50.  # mV
+    V_reset = E_K   # note that `V_reset` does not have to equal `E_K`
+    C_m = 100e-12    # Farad (F)
+    dt = 0.01   # ms
+    I_low = 200e-12     # 0.2 nA
+    I_high = 400e-12    # 0.4 nA
+
 
