@@ -126,17 +126,19 @@ def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m, d
     time_vector = np.arange(0, 300, dt) # simulate from 0 to 300 ms
     time_Ion = 100      # time to begin applied current (onset)
     time_Ioff = 200     # time to end applied current (offset)
-    index_Ion = round(time_on/dt)   # time-point index of current onset
-    index_Ioff = round(time_off/dt)     # time-point index of current offset
+    index_Ion = round(time_Ion/dt)   # time-point index of current onset
+    index_Ioff = round(time_Ioff/dt)     # time-point index of current offset
 
     # initialize
-    G_K = np.zeros(len(time_vector))
-    spikes = np.zeros(len(time_vector))
-    V = E_L * np.ones(len(time_vector))
-    V_thresholds = V_threshold_0 * np.ones(len(time_vector))
+    G_K = np.zeros(len(time_vector) + 1)
+    spikes = np.zeros(len(time_vector) + 1)
+    V = E_L * np.ones(len(time_vector) + 1)
+    V_thresholds = V_threshold_0 * np.ones(len(time_vector) + 1)
+    I = np.zeros(len(time_vector) + 1)
+    I[index_Ion:index_Ioff] = I_amplitude * np.ones(index_Ioff - index_Ion)
 
     def update_for_spike(t, G_K, V, spikes):
-        if V[t+1] > V_threholds[t+1]:
+        if V[t+1] > V_thresholds[t+1]:
             spikes[t+1] = 1
             if potassium_on:
                 G_K[t+1] += delta_G
@@ -144,7 +146,8 @@ def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m, d
                 V[t+1] = V_reset
         return G_K, V, spikes
 
-    for t in time_vector:
+    # iteratively update over all the steps
+    for t in range(0, len(time_vector)):
         if potassium_on:
             G_K[t+1] = G_K[t] * np.exp(-dt/tau_ref)
         else:
@@ -163,7 +166,7 @@ def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m, d
         V[t+1] = Vinf + (V[t] - Vinf) * np.exp(-dt/tau_eff)
 
         # update the membrane potential after a potential spike
-        G_K, V, spikes = update_after_spike(t, G_K, V, spikes)
+        G_K, V, spikes = update_for_spike(t, G_K, V, spikes)
 
     return G_K, V, spikes
 
