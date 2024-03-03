@@ -13,7 +13,7 @@ g_L = 5   # uS/mm2 - conductance per unit area of the membrane
 c_m = 100    # nF/mm2 - capciatnce per unit area of the membrane
 
 E_L = - 70   # mV  equilibium potential for potassium-like ions
-# mV this is the reset potential in the LIF mode (in in HH V_reset < EL)
+# mV this is the reset potential in the LIF mode (in in HH V_reset < E_L)
 V_reset = - 65  # mV
 area = L * np.pi * (2 * r) + 2 * np.pi * r**2 # mm2
 G_L = g_L * area    # units: uS/mm^2 * mm^2 = uS
@@ -24,7 +24,7 @@ tau_m = R_L * C_m   # 20 ms
 print("tau = {:.2f} ms".format(tau_m))
 print("resistance = {:.2f} MOhm".format(R_L))
 
-def simulate_LIF(
+def simulate_basic_LIF(
     dt,
     t_dur,
     I_start,
@@ -34,6 +34,10 @@ def simulate_LIF(
     V_reset,
     reset=True
 ):
+    """
+    Simulate a basic version of LIF: after neuron spikes and reaches
+    `V_threshold`, it will be reset to `V_reset`
+    """
     num_steps = int(np.ceil(t_dur/dt))
     V = np.zeros(num_steps + 1)
     V[0] = E_L
@@ -92,7 +96,7 @@ def firing_rates_vs_curent(dt, t_dur, I_amplitudes, V_threshold, V_reset,
     firing_rates_theoretical = np.array([])
 
     for I_amplitude in I_amplitudes:
-        outputs = simulate_LIF(dt, t_dur, I_start, I_stop, I_amplitude,
+        outputs = simulate_basic_LIF(dt, t_dur, I_start, I_stop, I_amplitude,
             V_threshold, V_reset)
         firing_rates_numerical = np.append(
             firing_rates_numerical,
