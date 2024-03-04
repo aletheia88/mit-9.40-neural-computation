@@ -31,6 +31,6 @@ In order to arrange to $(0.2)$ so that we know how to write our final solution, 
 
 After some algebra, we will find
 $$\tau_{eff} = \frac{C_m}{G_K(t) - G_L}$$
-Now, we can write the final solution for $(2.1)  \& (2.2)$:
+Now, we can write the final solution for $(2.1) \text{ and } (2.2)$:
 $$V(t) = \frac{I_e + G_L E_L + G_K(t) E_K}{G_L + G_K(t)} + \left(V_{reset} -  \frac{I_e + G_L E_L + G_K(t) E_K}{G_L + G_K(t)} \right) e^{-t/\tau_{eff}}$$
 where $$G_K(t) = G_K(0) e^{-t/\tau_r}$$
