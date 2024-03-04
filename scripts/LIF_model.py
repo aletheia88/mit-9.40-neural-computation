@@ -110,8 +110,8 @@ def firing_rates_vs_curent(dt, t_dur, I_amplitudes, V_threshold, V_reset,
     return firing_rates_numerical, firing_rates_theoretical
 
 
-def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m, dt, I_amplitude,
-        potassium_on=True):
+def simulate_extended_LIF(tau, tau_ref, E_L, E_K, V_threshold_0, V_reset, C_m,
+        dt, I_amplitude, potassium_on=True):
 
     """
      Instead of resetting the voltage each time it reaches `V_threshold`, we
@@ -197,5 +197,4 @@ if __name__ == "__main__":
     dt = 0.01   # ms
     I_low = 200e-12     # 0.2 nA
     I_high = 400e-12    # 0.4 nA
-
 
