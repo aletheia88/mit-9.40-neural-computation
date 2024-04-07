@@ -227,4 +227,122 @@ def plot_membrane_potential(
     ax.plot(time_vector, g_inh, color='b', lw=1, label="g_inh")
     fig.tight_layout(pad=2)
 
-simulate_modified_LIF_neuron()
+
+def simulate_synchrony(time_duration=200, dt=0.01):
+
+    time_vector = np.arange(0, time_duration, dt)
+
+    ### set cell parameters
+    tau_membrane = 20   # in ms
+    V_threshold = -54
+    V_reset = -80
+    E_L = -70
+    RI = 25     # voltage due to external source of current in mV
+    V_membrane_1 = np.zeros(time_vector.size)    # cell 1 voltage
+    V_membrane_2 = np.zeros(time_vector.size)    # cell 2 voltage
+
+    ### set synapse parameters
+    tau_synapse = 10    # synaptic time constant in ms
+
+    E_synapse_exc = 0   # in mV
+    E_synapse_inh = -80   # in mV
+
+    spike_times_1 = []   # spike times for neuron 1
+    spike_times_2 = []   # spike times for neuron 2
+
+    def compute_g_synapse(plot=False):
+
+        g_synapse = (0.05/tau_synapse) * time_vector * np.exp(1 - time_vector/tau_synapse)
+
+        if plot:
+            fig, ax = plt.subplots(figsize=(20, 4))
+            ax.plot(time_vector, g_synapse, 'b', lw=1)
+            ax.set_xlabel('time (ms)')
+            ax.set_ylabel('conductance g_s (t)')
+            ax.set_xlim(0, 100)
+            ax.grid()
+            plt.show()
+
+        return g_synapse
+
+    def compute_V_membrane(g_synapse, g_c=1):
+
+        # g_c is set to 1 for excitatory neurons; -1 for inhibitory neurons
+        if g_c > 0:
+            E_synapse = E_synapse_exc
+        else:
+            E_synapse = E_synapse_inh
+
+        V_membrane_1[0] = E_L
+        V_membrane_2[0] = V_reset
+
+        g_synapse_1 = np.zeros(time_vector.size)
+        g_synapse_2 = np.zeros(time_vector.size)
+
+        for t in tqdm(range(time_vector.size - 1)):
+
+            # update synapse conductances
+            for spike_t in range(1, 1 + len(spike_times_2)):
+                g_synapse_1[t] = g_synapse_1[t] + g_synapse[t - spike_times_2[spike_t - 1]]
+
+            for spike_t in range(1, 1 + len(spike_times_1)):
+                g_synapse_2[t] = g_synapse_2[t] + g_synapse[t - spike_times_1[spike_t - 1]]
+
+            # update cell membrane voltages
+            V_membrane_1[t + 1] = V_membrane_1[t] \
+                + (dt / tau_membrane) * (-(V_membrane_1[t] - E_L)) \
+                - g_synapse_1[t] * (V_membrane_1[t] - E_synapse) + RI
+
+            V_membrane_2[t + 1]  = V_membrane_2[t] \
+                + (dt / tau_membrane) * (-(V_membrane_2[t]- E_L)) \
+                - g_synapse_2[t] * (V_membrane_2[t] - E_synapse) + RI
+
+            if V_membrane_1[t + 1] > V_threshold:
+                spike_times_1.append(t + 1)
+                V_membrane_1[t + 1] = V_reset
+
+            if V_membrane_2[t + 1] > V_threshold:
+                spike_times_2.append(t + 1)
+                V_membrane_2[t + 1] = V_reset
+
+        return V_membrane_1, V_membrane_2, g_synapse_1, g_synapse_2
+
+    g_synapse = compute_g_synapse()
+    V_membrane_1, V_membrane_2, g_synapse_1, g_synapse_2 = compute_V_membrane(g_synapse)
+
+    ### plot synaptic conductances
+    fig, ax1 = plt.subplots(figsize=(20, 4))
+    ax1.plot(time_vector, g_synapse_1, color='b', lw=1, label="g_synapse_1")
+    ax1.plot(time_vector, g_synapse_2, color='r', lw=1, alpha = 0.6, label="g_synapse_2")
+    ax1.grid()
+    plt.legend()
+    plt.show()
+
+    ### plot spikes
+    V_membrane_1_copy = np.copy(V_membrane_1)
+    V_membrane_1_copy[spike_times_1] = 10
+    V_membrane_2_copy = np.copy(V_membrane_2)
+    V_membrane_2_copy[spike_times_2] = 10
+
+    fig, ax = plt.subplots(figsize=(20, 4))
+    ax.plot(
+        time_vector,
+        V_membrane_1_copy,
+        color='b',
+        zorder=2,
+        lw=1,
+        label="V_membrane_1"
+    )
+    ax.plot(
+        time_vector,
+        V_membrane_2_copy,
+        color='r',
+        zorder=1,
+        lw=2,
+        alpha=0.4,
+        label="V_membrane_2"
+    )
+    ax.grid()
+    plt.show()
+
+simulate_synchrony()
