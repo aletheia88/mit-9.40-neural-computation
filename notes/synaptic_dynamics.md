@@ -1,4 +1,4 @@
-## synaptic dynamics (lecture 10 & 11)
+## synaptic dynamics I (lecture 10)
 
 ### how synapse transmits neural signals
 Upon arrival of Action Potential (AP) to the presynaptic terminal, $Ca^{2+}$ voltage-gated channels open up and let in calcium. This leads to neurotransmitter-carrying vesicles to fuse with the membrane, then releasing the neurotransmitters into the synaptic cleft. Through diffusion, the neurotransmitters bind at the postsynaptic terminal; this whole process happens in about $50 \ \mu s$. The binding causes ion channels to open and graded postpotentials to form. Depending on the type of neurotransmitters, these postpotentials can be inhibitory or excitatory. Different neurotransmitters activate different ion channels, leading to either depolarization (often means "excites") or hyperpolarization of the cell (often means "inhibits").
@@ -80,5 +80,43 @@ $$\frac{dV}{dt} = \frac{1}{\tau_m} \cdot \left[ (-(V - E_L)) - \frac{g_{\text{ex
 
 See its solution in `scripts/synaptic_dynamics.py/simulate_membrane_potential`
 
-## kernel
-When we say "kernel", we mean a function that maps the post-synaptic voltage response of a neuron (or neuron ensembles) to a single spike (or a spike train or some other kinds of stimulus). For example, we may have $$K(t) = e^{-t\tau}$$ where $\tau = 10 \ ms$. Suppose that this neuron receives a burst of three presynaptic spikes with a firing rate of $200 \ Hz$
+## synaptic dynamics II (lecture 11)
+
+### kernel: input $\to$ response
+When we say "kernel", we mean a function that maps the post-synaptic voltage response of a neuron (or neuron ensembles) to a single spike (or a spike train or some other kinds of stimulus). For example, we may have $$K(t) = e^{-t\tau}$$ where $\tau = 10 \ ms$.
+
+Suppose that this neuron receives a burst of three presynaptic spikes with a firing rate of $200 \ Hz$. That means, a spikes takes place every $5$ ms because
+$$1/f = 1/200 Hz = 0.005 \ s = 5 \ ms$$
+
+Assuming the initial voltage $V = 0$ and that a train of two spikes with magnitude $V_0$ arrives at t = 0$. The neuron exhibits the following dynamics:
+$$\frac{d V}{d t} = -\frac{1}{\tau} V + V_0 \delta(t) + V_0 \delta(t - t_s), \quad t_s = 1/f. $$
+
+**Input**: 2 spikes; one at $t=0$, the other at $t=5 \ ms$
+
+**Response**: $V_0 \cdot \sum_{t_s} \delta(t - t_s)  = V_0\left[ K(0) + K(5) \right] = V_0 \left[ 1 + e^{-5/10} \right] = 1.96 \ V_0$
+
+### synchronization and the role of inhibition
+
+Synchronization of the response of a population of neurons could be led by excitation or inhibition. The key feature that determines whether excitation or inhibition synchronizes spiking is the rise time of the synaptic response. If postsynaptic conductance decays sufficiently slowly, mutual inhibition rather than excitation produces synchrony. For example, the sleep spindle rhythm is of thalamic origin and is believed to be induced by inhibition (Wang and Rinzel, 1993).
+
+Consider two neurons interacting according to
+
+$$\tau \frac{d V_1}{dt} =  - (V_1 - E_L) - g_{1s}(t)(V_1 - E_s) + R_m I$$
+
+$$\tau \frac{d V_2}{dt} =  - (V_2 - E_L) - g_{2s}(t)(V_2 - E_s) + R_m I$$
+The constant source $R_m I$ is taken to be large enough so both neurons fire regular spikes with period $T$ in the absence of mutual coupling, i.e., when $g_{1s} = g_{2s} = 0$.
+
+When $V_i = V_{th}$, the neuron fires and is reset to $V_i = V_{reset}$. The normalized synaptic conductance $g_{is}(t)$ is the synaptic input to neuron $i$. Let $g_s(t)$ be the contribution coming from one spike of the *presynaptic* neuron. We model $g_s(t)$ as a alpha function that follows
+$$g_s(t) = \frac{g}{\tau_s^2} \ t \ e^{-t/\tau_s}$$
+If cell $j \ne i$ fires at time $t_k$, the synaptic input to neuron $i$, that is $g_{is} (t)$, gets augmented by
+$$ g_{is} (t) \longrightarrow g_{is} (t) + g_s(t - t_k^{(j)})$$
+
+For the full simulation, check `scripts/synaptic_dynamics.py/simulate_synchrony`
+
+### facilitate synaptic transmission
+
+**synaptic facilitation**
+When a presynatic cell receives a series of pulses, the synatic connection may keep getting stronger with every AP. Specifically, the increased release of neurotransmitters in the presynaptic terminal causes a short-term (on the order of 100 ms) plasticity, making pre- and post-synaptic neurons more strongly connected.
+
+**synaptic depression**
+As the presynaptic cell keeps receiving more APs, the connection between pre- and post-synaptic cells tend to weaken. This *maybe* due to be the reduction in the number of of readily neurotransmitter-releasable vesicles (RRP).
