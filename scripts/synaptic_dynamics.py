@@ -2,11 +2,12 @@
 # implementations to `notes/synaptic_dynamics.md`
 # author: Alicia KY. Lu
 
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def solve_cell_dynamics(tau, v0, V_init, t_s_vector, dt, t_start, t_end):
+def simulate_single_neuron_dynamics(tau, v0, V_init, t_s_vector, dt, t_start, t_end):
     """
     Solve: V(t + dt) = V(t) - dt/tau V(t) + v_0 * tau*n(t)
     """
@@ -23,21 +24,24 @@ def solve_cell_dynamics(tau, v0, V_init, t_s_vector, dt, t_start, t_end):
 
     return time_vector, V
 
-tau = 5     # in ms
-v0 = 1      # in mV
-V_init = 0
-t_s_vector = np.array([10, 40, 50, 55])     # current pulses occuring time in ms
-dt = 0.01
-t_start = 0     # in ms
-t_end = 80      # in ms
-time_vector, V = solve_cell_dynamics(tau, v0, V_init, t_s_vector, dt, t_start, t_end)
+def plot_single_neuron_dynamic(time_vector, V):
 
-plt.plot(time_vector, V, 'b')
-plt.xlabel('time (ms)')
-plt.ylabel('V(t) (mV)')
-plt.title(r'$v_0 \cdot \tau$ = %.2f'%(v0 * tau) + " mV")
-plt.grid()
-plt.show()
+    tau = 5     # in ms
+    v0 = 1      # in mV
+    V_init = 0
+    t_s_vector = np.array([10, 40, 50, 55])     # current pulses occuring time in ms
+    dt = 0.01
+    t_start = 0     # in ms
+    t_end = 80      # in ms
+    time_vector, V = simulate_single_neuron_dynamics(tau, v0, V_init, t_s_vector, dt, t_start, t_end)
+
+    plt.plot(time_vector, V, 'b')
+    plt.xlabel('time (ms)')
+    plt.ylabel('V(t) (mV)')
+    plt.title(r'$v_0 \cdot \tau$ = %.2f'%(v0 * tau) + " mV")
+    plt.grid()
+    plt.show()
+
 
 def simulate_modified_LIF_neuron(time_duration=1000, dt=0.1):
 
