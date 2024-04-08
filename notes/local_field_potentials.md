@@ -92,4 +92,8 @@ $$V(t) = \int K(t - t')s(t') \ dt'$$
 #### significance
 Knowing the voltage response of a cell to a single spike, we can predict the voltage response of this cell to any other stimulus; this implies that the kernel $K(t)$ is an intrinsic property of the cell independent of the stimulus.
 
-### edge detection in human vision system
+### case study: edge detection in human vision system
+
+**the Mach band effect**
+
+An optical illusion that exaggerates the contrast between edges of the slightly differing shades of gray, as soon as they contact one another, by triggering edge-detection in the human visual system. The neuronal model that explains this Mach effect is based on neuronal inhibition.
