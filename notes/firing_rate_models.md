@@ -27,4 +27,8 @@ $$\frac{d u_1}{d t} = - \frac{1}{\tau} (u_1 - v_1)$$
 $$\frac{d u_2}{d t} = - \frac{1}{\tau} (u_2 - v_2)$$
 where $v_1, v_2$ represent the right, left eye processing of the input; $u_1$, $u_2$ are the adaption parameters for the right and left eye; $\tau$ is the time constant to be fitted; the function $F$ models the firing rate input from the other cell and taken to be a sigmoid function, specifically
 $$F(x) = \frac{1}{1 + \exp(1-x)}$$
-In our case, we will ignore the adaption parameters $u_1$ and $u_2$ to make our system two-dimensional.
+In our case, we will ignore the adaption parameters $u_1$ and $u_2$ to make our system two-dimensional:
+$$\frac{d v_1}{d t} = - v_1 + F(I_{app} - a v_2 )$$
+$$\frac{d v_2}{d t} = - v_2 + F(I_{app} - a v_1)$$
+
+See the simulation in `scripts/firing_rate_models.py`
