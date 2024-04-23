@@ -106,7 +106,6 @@ def binocular_rivalry(
             r'$v_1(0), v_2(0) = (%.2f, %.2f),\quad a = %.2f$'%(x0[0], x0[1],
                 a))
 
-
 # binocular_rivalry(
 #     a_parameters=[6],
 #     I_parameters=[0, 1, 2, 4, 5, 6, 8, 10]
@@ -124,12 +123,71 @@ def binocular_rivalry(
 #     plot2=True,
 #     plot3=False,
 # )
-binocular_rivalry(
-    a_parameters=[5],
-    I_parameters=list(np.arange(0.5, 8, 1)),
-    dt=0.01,
-    time_max=40,
-    plot1=False,
-    plot2=False,
-    plot3=True
+# binocular_rivalry(
+#     a_parameters=[5],
+#     I_parameters=list(np.arange(0.5, 8, 1)),
+#     dt=0.01,
+#     time_max=40,
+#     plot1=False,
+#     plot2=False,
+#     plot3=True
+# )
+
+def firing_rates(time_max, dt, I_app, sigma, a, V0, tau=0.1):
+
+    def F(x):
+        """Sigmoid function of activation"""
+        return 1 / (1 + np.exp(1 - x))
+
+    def filter(x):
+        if x > 1:
+            return 1
+        elif x < 0:
+            return 0
+        else:
+            return x
+
+    time_vector = np.arange(0, time_max, dt)
+
+    def compute_firing_rates():
+
+        v1 = np.zeros(len(time_vector))
+        v2 = np.zeros(len(time_vector))
+        x1 = sigma * np.random.randn(len(time_vector))
+        x2 = sigma * np.random.randn(len(time_vector))
+
+        v1[0] = V0[0]
+        v2[0] = V0[1]
+
+        for t in range(len(time_vector) - 1):
+
+            v1[t + 1] = v1[t] * (1 - dt/tau) + \
+                (dt/tau) * F(I_app - a * v2[t]) + \
+                x1[t] * np.sqrt(dt) / tau
+            v2[t + 1] = v2[t] * (1 - dt/tau) + \
+                (dt/tau) * F(I_app - a * v1[t]) + \
+                x2[t] * np.sqrt(dt) / tau
+
+            v1[t + 1] = filter(v1[t + 1])
+            v2[t + 1] = filter(v2[t + 1])
+
+        return v1, v2
+
+    v1, v2 = compute_firing_rates()
+    _, ax = plt.subplots(1, 1, figsize=(20, 2))
+    ax.plot(time_vector, v1,  'b', zorder=2)
+    ax.plot(time_vector, v2,  c='orange', alpha = 0.5, zorder=1)
+    ax.set_xlabel("time")
+    ax.set_ylabel("v1")
+    ax.set_xlim(0, 50)
+    ax.axhline(y=1, c='k', ls='--')
+    plt.show()
+
+firing_rates(
+    time_max=1000,
+    dt=0.001,
+    I_app=3,
+    sigma=0.03,
+    a=5.0,
+    V0=[0.5, 0.5],
 )
