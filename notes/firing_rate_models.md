@@ -32,3 +32,38 @@ $$\frac{d v_1}{d t} = - v_1 + F(I_{app} - a v_2 )$$
 $$\frac{d v_2}{d t} = - v_2 + F(I_{app} - a v_1)$$
 
 See the simulation in `scripts/firing_rate_models.py`
+
+### noise induced transitions
+
+Set $a_c = 5$ and $I_{app} = 3$. Let $\xi$ be a random source. Our 2D dynamical system now becomes $$\frac{d v_i}{dt} = - v_i + F(I - a v_j) + \xi$$
+
+#### Euler-Maruyama (Euler) method
+$$X_{n + 1} = X_n + f(X_n) \Delta t + \sqrt{\sigma^2 \Delta t} \ N(0, 1)$$
+
+Using the Euler method, we update our system as follows:
+$$v^{1}_{t+1} = v^{1,2}_{t} + dv^{1,2}_t$$
+where the supscripts mean to represent that the value depends on both $v_1$ and $v_2$.
+We write the update $d v^{1,2}_{t}$ as
+$$d v^{1}_{t} = \frac{1}{\tau} \cdot \left( -v_{t}^{1} \ dt + F(I - a v_{t}^2) \ dt + \sqrt{\sigma^2 \Delta t} \ N(0, 1) \right)$$
+where we group the random source as: $\sigma N(0, 1)\sqrt{\Delta t} \equiv x^i \sqrt{\Delta t}$
+Substituting the temporal update yields
+$$v_{t + 1}^i = v_{t}^i + \frac{1}{\tau} \ dt \left( - v_t^i + F(I - a v_t^j) \right) + x^i \sqrt{\Delta t}$$
+This is implemented in `scripts/firing_rate_models.py`
+
+### synaptic saturation with a train of Poisson spikes
+
+Synaptic conductance can be modeled as a maximum conductance multiplied by a probability $P$ reflecting events at the presynaptic and postsynaptic terminal
+
+$$g_s = \bar g_s P$$
+
+We factorize the probability $P$ as the probability of release of a neurotransmitter and that of opening postsynaptic channels.
+
+$$P = P_{post} P_{release}$$
+
+The release probability decreases between spikes:
+$$\tau_p \frac{d P_{release}}{dt} = P_{0, release} - P_{release}$$
+where $P_{0, release}$ is the release probability in the absence of spikes (very low). We update $P_{release}$ after each spike as follows
+$$P_{+, release} = P_{release} + \alpha (1 - P_{release}) \quad 0 \leq \alpha \leq 1$$
+
+Let $T$ be the time in between the current and previous spike (let $P$ be $P_{release}$ for notation simplifity). Just before the new spike acts on vesicles, we have
+$$P(T) = P_0 + (P + \alpha (1 - P) - P_0) e^{-T/\tau_P}$$
